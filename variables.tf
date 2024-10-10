@@ -6,27 +6,31 @@ variable "aws_profile" {
 variable "region" {
   description = "AWS region to deploy resources"
   type        = string
-  default     = "us-west-1"
 }
 
-variable "vpc_name" {
-  description = "Unique name for the VPC"
+variable "number_of_vpcs" {
+  description = "Number of VPCs to create"
+  type        = number
+}
+
+variable "vpc_name_prefix" {
+  description = "Prefix for VPC names"
   type        = string
 }
 
 variable "vpc_cidrs" {
-  description = "Map of regions to VPC CIDR blocks"
-  type        = map(string)
+  description = "List of CIDR blocks for each VPC"
+  type        = list(string)
 }
 
 variable "public_subnet_cidrs_list" {
-  description = "Map of regions to lists of CIDR blocks for public subnets"
-  type        = map(list(string))
+  description = "List of lists of CIDR blocks for public subnets for each VPC"
+  type        = list(list(string))
 }
 
 variable "private_subnet_cidrs_list" {
-  description = "Map of regions to lists of CIDR blocks for private subnets"
-  type        = map(list(string))
+  description = "List of lists of CIDR blocks for private subnets for each VPC"
+  type        = list(list(string))
 }
 
 variable "availability_zones_list" {

@@ -5,7 +5,7 @@ resource "aws_vpc" "my_vpc" {
   enable_dns_hostnames = true
 
   tags = {
-    Name = "${var.vpc_name}-VPC"
+    Name = "${var.vpc_name}-VPC-${var.random_suffix}"
   }
 }
 
@@ -14,32 +14,32 @@ resource "aws_internet_gateway" "igw" {
   vpc_id = aws_vpc.my_vpc.id
 
   tags = {
-    Name = "${var.vpc_name}-IGW"
+    Name = "${var.vpc_name}-IGW-${var.random_suffix}"
   }
 }
 
 # Public subnets
 resource "aws_subnet" "public_subnet" {
-  count                   = length(var.public_subnet_cidrs)  # Adjusted count
+  count                   = length(var.public_subnet_cidrs)
   vpc_id                  = aws_vpc.my_vpc.id
   cidr_block              = var.public_subnet_cidrs[count.index]
   availability_zone       = element(var.availability_zones, count.index)
   map_public_ip_on_launch = true
 
   tags = {
-    Name = "${var.vpc_name}-PublicSubnet-${count.index + 1}"
+    Name = "${var.vpc_name}-PublicSubnet-${count.index + 1}-${var.random_suffix}"
   }
 }
 
 # Private subnets
 resource "aws_subnet" "private_subnet" {
-  count             = length(var.private_subnet_cidrs)  # Adjusted count
+  count             = length(var.private_subnet_cidrs)
   vpc_id            = aws_vpc.my_vpc.id
   cidr_block        = var.private_subnet_cidrs[count.index]
   availability_zone = element(var.availability_zones, count.index)
 
   tags = {
-    Name = "${var.vpc_name}-PrivateSubnet-${count.index + 1}"
+    Name = "${var.vpc_name}-PrivateSubnet-${count.index + 1}-${var.random_suffix}"
   }
 }
 
@@ -53,7 +53,7 @@ resource "aws_route_table" "public_route_table" {
   }
 
   tags = {
-    Name = "${var.vpc_name}-PublicRouteTable"
+    Name = "${var.vpc_name}-PublicRouteTable-${var.random_suffix}"
   }
 }
 
@@ -69,7 +69,7 @@ resource "aws_route_table" "private_route_table" {
   vpc_id = aws_vpc.my_vpc.id
 
   tags = {
-    Name = "${var.vpc_name}-PrivateRouteTable"
+    Name = "${var.vpc_name}-PrivateRouteTable-${var.random_suffix}"
   }
 }
 
@@ -78,30 +78,4 @@ resource "aws_route_table_association" "private_assoc" {
   count          = length(aws_subnet.private_subnet)
   subnet_id      = aws_subnet.private_subnet[count.index].id
   route_table_id = aws_route_table.private_route_table.id
-}
-
-# Variables for the module
-variable "vpc_name" {
-  description = "Unique name for the VPC and its resources"
-  type        = string
-}
-
-variable "vpc_cidr" {
-  description = "CIDR block for the VPC"
-  type        = string
-}
-
-variable "public_subnet_cidrs" {
-  description = "List of CIDR blocks for public subnets"
-  type        = list(string)
-}
-
-variable "private_subnet_cidrs" {
-  description = "List of CIDR blocks for private subnets"
-  type        = list(string)
-}
-
-variable "availability_zones" {
-  description = "List of availability zones to use"
-  type        = list(string)
 }
