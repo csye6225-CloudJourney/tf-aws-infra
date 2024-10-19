@@ -15,23 +15,40 @@ provider "aws" {
   region  = var.region
 }
 
-# Generate a random string for each VPC to ensure uniqueness
+# Generate a random string for the VPC to ensure uniqueness
 resource "random_string" "vpc_suffix" {
-  count   = var.number_of_vpcs # Create one random string for each VPC
   length  = 4
   special = false
   upper   = false
 }
 
-# Create multiple VPCs dynamically using count
+# Create a VPC
 module "vpc" {
-  source = "./modules/vpc"
-  count  = var.number_of_vpcs # Dynamically create multiple VPCs
+  source               = "./modules/vpc"
+  vpc_name             = "${var.vpc_name_prefix}-${random_string.vpc_suffix.result}"
+  vpc_cidr             = var.vpc_cidr
+  public_subnet_cidrs  = var.public_subnet_cidrs
+  private_subnet_cidrs = var.private_subnet_cidrs
+  availability_zones   = var.availability_zones
+  random_suffix        = random_string.vpc_suffix.result
+}
 
-  vpc_name             = "${var.vpc_name_prefix}-${random_string.vpc_suffix[count.index].result}"
-  vpc_cidr             = var.vpc_cidrs[count.index]                 # Use the next CIDR block
-  public_subnet_cidrs  = var.public_subnet_cidrs_list[count.index]  # Pass unique public subnets for each VPC
-  private_subnet_cidrs = var.private_subnet_cidrs_list[count.index] # Pass unique private subnets for each VPC
-  availability_zones   = var.availability_zones_list[var.region]
-  random_suffix        = random_string.vpc_suffix[count.index].result # Apply random suffix to other resources
+# Create the EC2 instance
+resource "aws_instance" "web_app" {
+  ami                    = var.custom_ami_id
+  instance_type          = var.instance_type
+  vpc_security_group_ids = [module.vpc.app_sg]
+  subnet_id              = module.vpc.public_subnets[0]
+
+  root_block_device {
+    volume_size           = 25
+    volume_type           = "gp2"
+    delete_on_termination = true
+  }
+
+  disable_api_termination = false
+
+  tags = {
+    Name = "${module.vpc.vpc_name}-WebApp-${module.vpc.random_suffix}" # Reference from the module
+  }
 }
