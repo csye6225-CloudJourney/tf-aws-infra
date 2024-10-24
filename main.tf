@@ -74,6 +74,7 @@ resource "aws_db_instance" "mydb" {
   multi_az               = false
   parameter_group_name   = aws_db_parameter_group.mydb_pg.name
   db_name                = "csye6225" # Corrected argument
+  skip_final_snapshot    = true
 
   tags = {
     Name = "csye6225-RDS-Instance"
