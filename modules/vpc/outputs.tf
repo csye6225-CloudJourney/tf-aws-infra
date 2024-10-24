@@ -4,6 +4,12 @@ output "app_sg" {
   value       = aws_security_group.app_sg.id
 }
 
+# Output for Database Security Group
+output "db_sg" {
+  description = "The database security group"
+  value       = aws_security_group.db_sg.id
+}
+
 # Output for Public Subnets
 output "public_subnets" {
   description = "List of public subnet IDs"
@@ -20,4 +26,10 @@ output "vpc_name" {
 output "random_suffix" {
   description = "Random suffix for naming uniqueness"
   value       = var.random_suffix
+}
+
+# Output for Private Subnets
+output "private_subnets" {
+  description = "List of private subnet IDs"
+  value       = aws_subnet.private_subnet[*].id
 }
