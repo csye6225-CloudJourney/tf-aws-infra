@@ -42,3 +42,9 @@ variable "instance_type" {
   description = "Instance type to use for the EC2 instance"
   type        = string
 }
+
+variable "db_password" {
+  description = "The master password for the RDS instance"
+  type        = string
+  sensitive   = true
+}
