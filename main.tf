@@ -36,7 +36,7 @@ module "vpc" {
 # Create a DB Subnet Group
 resource "aws_db_subnet_group" "mydb_subnet_group" {
   name       = "private-subnet-group"
-  subnet_ids = module.vpc.private_subnets  # Reference your private subnets
+  subnet_ids = module.vpc.private_subnets # Reference your private subnets
 
   tags = {
     Name = "csye6225-private-subnet-group"
@@ -61,19 +61,19 @@ resource "aws_db_parameter_group" "mydb_pg" {
 
 # Create the RDS instance with the custom parameter group
 resource "aws_db_instance" "mydb" {
-  allocated_storage       = 20
-  engine                  = "postgres"
-  engine_version          = "16.4"
-  instance_class          = "db.t4g.micro"
-  db_subnet_group_name    = aws_db_subnet_group.mydb_subnet_group.name  # Reference the newly created subnet group
-  identifier              = "csye6225"
-  username                = "csye6225"
-  password                = var.db_password  # Pass the strong password securely
-  vpc_security_group_ids  = [module.vpc.db_sg]
-  publicly_accessible     = false
-  multi_az                = false
-  parameter_group_name    = aws_db_parameter_group.mydb_pg.name
-  db_name                 = "csye6225"  # Corrected argument
+  allocated_storage      = 20
+  engine                 = "postgres"
+  engine_version         = "16.4"
+  instance_class         = "db.t4g.micro"
+  db_subnet_group_name   = aws_db_subnet_group.mydb_subnet_group.name # Reference the newly created subnet group
+  identifier             = "csye6225"
+  username               = "csye6225"
+  password               = var.db_password # Pass the strong password securely
+  vpc_security_group_ids = [module.vpc.db_sg]
+  publicly_accessible    = false
+  multi_az               = false
+  parameter_group_name   = aws_db_parameter_group.mydb_pg.name
+  db_name                = "csye6225" # Corrected argument
 
   tags = {
     Name = "csye6225-RDS-Instance"
