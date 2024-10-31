@@ -82,7 +82,7 @@ resource "aws_db_instance" "mydb" {
   }
 }
 
-# IAM Role and Policy for CloudWatch Agent and S3 Access
+# IAM Role and Policies for CloudWatch Agent and S3 Access
 resource "aws_iam_role" "cloudwatch_agent_role" {
   name = "CloudWatchAgentRole-${local.environment}"
   assume_role_policy = jsonencode({
@@ -107,13 +107,13 @@ resource "aws_iam_role_policy_attachment" "attach_cloudwatch_agent_policy" {
 # S3 Access Policy for CloudWatchAgentRole
 resource "aws_iam_policy" "s3_access_policy" {
   name        = "S3AccessPolicy-${local.environment}"
-  description = "Policy for EC2 to access specific S3 bucket only"
-  policy      = jsonencode({
+  description = "Policy for EC2 to access and delete specific S3 bucket only"
+  policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
       {
-        Action   = "s3:*",
-        Effect   = "Allow",
+        Action = ["s3:ListBucket", "s3:PutObject", "s3:GetObject", "s3:DeleteObject"],
+        Effect = "Allow",
         Resource = [
           "arn:aws:s3:::${aws_s3_bucket.csye6225_s3.bucket}",
           "arn:aws:s3:::${aws_s3_bucket.csye6225_s3.bucket}/*"
@@ -198,9 +198,12 @@ resource "aws_instance" "web_app" {
     echo "DB_NAME=${aws_db_instance.mydb.db_name}" >> /etc/environment
     echo "S3_BUCKET_NAME=${aws_s3_bucket.csye6225_s3.bucket}" >> /etc/environment
 
+    # Start the web application service
     sudo systemctl start webapp.service
+
     # Start and configure CloudWatch Agent
-    sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s
+    sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
+      -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s
   EOF
 
   tags = {
@@ -208,6 +211,7 @@ resource "aws_instance" "web_app" {
   }
 }
 
+# Route 53 Zone and Record
 data "aws_route53_zone" "current" {
   name = "${local.environment}.cloudjourney.me."
 }
