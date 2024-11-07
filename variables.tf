@@ -48,3 +48,43 @@ variable "db_password" {
   type        = string
   sensitive   = true
 }
+
+variable "key_name" {
+  description = "AWS Key Pair for SSH access"
+  type        = string
+}
+
+variable "asg_min_size" {
+  description = "Minimum number of instances in the Auto Scaling Group"
+  type        = number
+  default     = 3
+}
+
+variable "asg_max_size" {
+  description = "Maximum number of instances in the Auto Scaling Group"
+  type        = number
+  default     = 5
+}
+
+variable "asg_desired_capacity" {
+  description = "Desired number of instances in the Auto Scaling Group"
+  type        = number
+  default     = 1
+}
+
+variable "asg_cooldown" {
+  description = "Cooldown period for the Auto Scaling Group (in seconds)"
+  type        = number
+  default     = 60
+}
+
+variable "app_port" {
+  description = "Port on which the web application listens"
+  type        = number
+  default     = 8080
+}
+
+variable "hosted_zone_id" {
+  description = "The hosted zone ID for Route 53."
+  type        = string
+}

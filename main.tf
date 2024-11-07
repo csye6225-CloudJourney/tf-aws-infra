@@ -224,3 +224,20 @@ resource "aws_route53_record" "web_app" {
   ttl     = 60
   records = [aws_instance.web_app.public_ip]
 }
+
+# Use aws_profile to select the correct hosted zone
+data "aws_route53_zone" "cloudjourney_zone" {
+  name = "${var.aws_profile}.cloudjourney.me."
+}
+
+# Alias Record for dev or demo.cloudjourney.me
+resource "aws_route53_record" "alias_record" {
+  zone_id = data.aws_route53_zone.cloudjourney_zone.zone_id
+  name    = "${var.aws_profile}.cloudjourney.me"
+  type    = "A"
+  alias {
+    name                   = aws_lb.app_lb.dns_name
+    zone_id                = aws_lb.app_lb.zone_id
+    evaluate_target_health = true
+  }
+}
