@@ -2,9 +2,9 @@
 resource "aws_launch_template" "csye6225_launch_template" {
   name = "csye6225_asg"
 
-  image_id      = var.custom_ami_id 
-  instance_type = var.instance_type 
-  key_name      = var.key_name      
+  image_id      = var.custom_ami_id
+  instance_type = var.instance_type
+  key_name      = var.key_name
 
   # IAM Instance Profile
   iam_instance_profile {
@@ -18,7 +18,7 @@ resource "aws_launch_template" "csye6225_launch_template" {
   }
 
   # User Data (Base64 Encoded)
-    user_data = base64encode(<<-EOF
+  user_data = base64encode(<<-EOF
     #!/bin/bash
     export DB_HOST="${aws_db_instance.mydb.address}"
     export DB_USERNAME="${aws_db_instance.mydb.username}"
@@ -44,7 +44,7 @@ resource "aws_lb" "app_lb" {
   name               = "${var.vpc_name_prefix}-app-lb"
   internal           = false
   load_balancer_type = "application"
-  security_groups    = [module.vpc.load_balancer_sg]  
+  security_groups    = [module.vpc.load_balancer_sg]
   subnets            = module.vpc.public_subnets
 
   enable_deletion_protection = false
@@ -57,17 +57,17 @@ resource "aws_lb" "app_lb" {
 # Target Group for EC2 Instances
 resource "aws_lb_target_group" "app_target_group" {
   name     = "${var.vpc_name_prefix}-app-tg"
-  port     = 8080                    
+  port     = 8080
   protocol = "HTTP"
-  vpc_id   = module.vpc.vpc_id  # Use output from vpc module
+  vpc_id   = module.vpc.vpc_id # Use output from vpc module
 
   health_check {
-    path                = "/healthz"  
+    path                = "/healthz"
     interval            = 30
     timeout             = 5
     healthy_threshold   = 3
     unhealthy_threshold = 2
-    matcher             = "200"       
+    matcher             = "200"
   }
 
   tags = {
@@ -89,11 +89,11 @@ resource "aws_lb_listener" "app_lb_listener" {
 
 # Auto Scaling Group 
 resource "aws_autoscaling_group" "csye6225_asg" {
-  desired_capacity     = var.asg_desired_capacity
-  max_size             = var.asg_max_size
-  min_size             = var.asg_min_size
-  health_check_type    = "ELB"
-  vpc_zone_identifier  = module.vpc.public_subnets
+  desired_capacity    = var.asg_desired_capacity
+  max_size            = var.asg_max_size
+  min_size            = var.asg_min_size
+  health_check_type   = "ELB"
+  vpc_zone_identifier = module.vpc.public_subnets
   launch_template {
     id      = aws_launch_template.csye6225_launch_template.id
     version = "$Latest"
