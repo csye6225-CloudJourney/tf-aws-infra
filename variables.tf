@@ -57,7 +57,7 @@ variable "key_name" {
 variable "asg_min_size" {
   description = "Minimum number of instances in the Auto Scaling Group"
   type        = number
-  default     = 3
+  default     = 1
 }
 
 variable "asg_max_size" {
@@ -69,7 +69,7 @@ variable "asg_max_size" {
 variable "asg_desired_capacity" {
   description = "Desired number of instances in the Auto Scaling Group"
   type        = number
-  default     = 1
+  default     = 2
 }
 
 variable "asg_cooldown" {

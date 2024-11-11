@@ -211,26 +211,12 @@ resource "aws_instance" "web_app" {
   }
 }
 
-# Route 53 Zone and Record
-data "aws_route53_zone" "current" {
-  name = "${local.environment}.cloudjourney.me."
-}
-
-resource "aws_route53_record" "web_app" {
-  count   = 1
-  zone_id = data.aws_route53_zone.current.zone_id
-  name    = "${local.environment}.cloudjourney.me"
-  type    = "A"
-  ttl     = 60
-  records = [aws_instance.web_app.public_ip]
-}
-
-# Use aws_profile to select the correct hosted zone
+# Route 53 Zone Data Source
 data "aws_route53_zone" "cloudjourney_zone" {
   name = "${var.aws_profile}.cloudjourney.me."
 }
 
-# Alias Record for dev or demo.cloudjourney.me
+# Alias Record for Load Balancer
 resource "aws_route53_record" "alias_record" {
   zone_id = data.aws_route53_zone.cloudjourney_zone.zone_id
   name    = "${var.aws_profile}.cloudjourney.me"
