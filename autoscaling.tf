@@ -19,22 +19,26 @@ resource "aws_launch_template" "csye6225_launch_template" {
 
   # User Data (Base64 Encoded)
   user_data = base64encode(<<-EOF
-    #!/bin/bash
-    export DB_HOST="${aws_db_instance.mydb.address}"
-    export DB_USERNAME="${aws_db_instance.mydb.username}"
-    export DB_PASSWORD="${var.db_password}"
-    export DB_NAME="${aws_db_instance.mydb.db_name}"
-    export S3_BUCKET_NAME="${aws_s3_bucket.csye6225_s3.bucket}"
-    echo "DB_HOST=${aws_db_instance.mydb.address}" >> /etc/environment
-    echo "DB_USERNAME=${aws_db_instance.mydb.username}" >> /etc/environment
-    echo "DB_PASSWORD=${var.db_password}" >> /etc/environment
-    echo "DB_NAME=${aws_db_instance.mydb.db_name}" >> /etc/environment
-    echo "S3_BUCKET_NAME=${aws_s3_bucket.csye6225_s3.bucket}" >> /etc/environment
-    # Start the web application service
-    sudo systemctl start webapp.service
-    # Start and configure CloudWatch Agent
-    sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
-      -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s
+  #!/bin/bash
+  export DB_HOST="${aws_db_instance.mydb.address}"
+  export DB_USERNAME="${aws_db_instance.mydb.username}"
+  export DB_PASSWORD="${var.db_password}"
+  export DB_NAME="${aws_db_instance.mydb.db_name}"
+  export S3_BUCKET_NAME="${aws_s3_bucket.csye6225_s3.bucket}"
+  export SNS_TOPIC_ARN="${aws_sns_topic.email_verification_topic.arn}"
+
+  echo "DB_HOST=${aws_db_instance.mydb.address}" >> /etc/environment
+  echo "DB_USERNAME=${aws_db_instance.mydb.username}" >> /etc/environment
+  echo "DB_PASSWORD=${var.db_password}" >> /etc/environment
+  echo "DB_NAME=${aws_db_instance.mydb.db_name}" >> /etc/environment
+  echo "S3_BUCKET_NAME=${aws_s3_bucket.csye6225_s3.bucket}" >> /etc/environment
+  echo "SNS_TOPIC_ARN=${aws_sns_topic.email_verification_topic.arn}" >> /etc/environment
+
+  # Start the web application service
+  sudo systemctl start webapp.service
+  # Start and configure CloudWatch Agent
+  sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
+    -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s
 EOF
   )
 }

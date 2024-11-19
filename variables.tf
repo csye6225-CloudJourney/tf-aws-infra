@@ -84,7 +84,18 @@ variable "app_port" {
   default     = 8080
 }
 
-variable "hosted_zone_id" {
-  description = "The hosted zone ID for Route 53."
+#variable "hosted_zone_id" {
+# description = "The hosted zone ID for Route 53."
+#type        = string
+#}
+
+variable "sendgrid_api_key" {
+  description = "SendGrid API key for sending emails"
+  type        = string
+  sensitive   = true
+}
+
+variable "lambda_zip_file" {
+  description = "Path to the Lambda zip file"
   type        = string
 }

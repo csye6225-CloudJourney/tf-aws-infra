@@ -168,49 +168,6 @@ resource "aws_s3_bucket_lifecycle_configuration" "csye6225_s3_lifecycle" {
   }
 }
 
-# EC2 Instance
-resource "aws_instance" "web_app" {
-  ami                    = var.custom_ami_id
-  instance_type          = var.instance_type
-  vpc_security_group_ids = [module.vpc.app_sg]
-  subnet_id              = module.vpc.public_subnets[0]
-  iam_instance_profile   = aws_iam_instance_profile.cloudwatch_agent_profile.name
-
-  root_block_device {
-    volume_size           = 25
-    volume_type           = "gp2"
-    delete_on_termination = true
-  }
-
-  disable_api_termination = false
-
-  user_data = <<-EOF
-    #!/bin/bash
-    export DB_HOST="${aws_db_instance.mydb.address}"
-    export DB_USERNAME="${aws_db_instance.mydb.username}"
-    export DB_PASSWORD="${var.db_password}"
-    export DB_NAME="${aws_db_instance.mydb.db_name}"
-    export S3_BUCKET_NAME="${aws_s3_bucket.csye6225_s3.bucket}"
-
-    echo "DB_HOST=${aws_db_instance.mydb.address}" >> /etc/environment
-    echo "DB_USERNAME=${aws_db_instance.mydb.username}" >> /etc/environment
-    echo "DB_PASSWORD=${var.db_password}" >> /etc/environment
-    echo "DB_NAME=${aws_db_instance.mydb.db_name}" >> /etc/environment
-    echo "S3_BUCKET_NAME=${aws_s3_bucket.csye6225_s3.bucket}" >> /etc/environment
-
-    # Start the web application service
-    sudo systemctl start webapp.service
-
-    # Start and configure CloudWatch Agent
-    sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
-      -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s
-  EOF
-
-  tags = {
-    Name = "${module.vpc.vpc_name}-WebApp-${local.environment}-${module.vpc.random_suffix}"
-  }
-}
-
 # Route 53 Zone Data Source
 data "aws_route53_zone" "cloudjourney_zone" {
   name = "${var.aws_profile}.cloudjourney.me."
@@ -226,4 +183,117 @@ resource "aws_route53_record" "alias_record" {
     zone_id                = aws_lb.app_lb.zone_id
     evaluate_target_health = true
   }
+}
+
+# SNS Topic for Email Verification
+resource "aws_sns_topic" "email_verification_topic" {
+  name = "email-verification-topic"
+
+  tags = {
+    Name = "EmailVerificationTopic"
+  }
+}
+
+# IAM Role for Lambda
+resource "aws_iam_role" "lambda_execution_role" {
+  name = "email-verification-lambda-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Action = "sts:AssumeRole",
+        Effect = "Allow",
+        Principal = {
+          Service = "lambda.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
+
+# IAM Policy for Lambda
+resource "aws_iam_policy" "lambda_policy" {
+  name = "email-verification-lambda-policy"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect   = "Allow",
+        Action   = ["sns:Publish"],
+        Resource = aws_sns_topic.email_verification_topic.arn
+      },
+      {
+        Effect   = "Allow",
+        Action   = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"],
+        Resource = "arn:aws:logs:*:*:*"
+      }
+    ]
+  })
+}
+
+# Attach Policy to Role
+resource "aws_iam_role_policy_attachment" "lambda_policy_attach" {
+  role       = aws_iam_role.lambda_execution_role.name
+  policy_arn = aws_iam_policy.lambda_policy.arn
+}
+
+# Lambda Function
+resource "aws_lambda_function" "email_verification_lambda" {
+  function_name = "email-verification-handler"
+  role          = aws_iam_role.lambda_execution_role.arn
+  runtime       = "python3.9"
+  handler       = "lambda_function.lambda_handler"
+
+  # Path to the Lambda function zip file 
+  filename = var.lambda_zip_file
+
+  environment {
+    variables = {
+      DB_HOST          = aws_db_instance.mydb.address
+      DB_USERNAME      = aws_db_instance.mydb.username
+      DB_PASSWORD      = var.db_password
+      DB_NAME          = aws_db_instance.mydb.db_name
+      SENDGRID_API_KEY = var.sendgrid_api_key
+    }
+  }
+
+  tags = {
+    Name = "EmailVerificationLambda"
+  }
+}
+
+# SNS Subscription to Lambda
+resource "aws_sns_topic_subscription" "lambda_sns_subscription" {
+  topic_arn = aws_sns_topic.email_verification_topic.arn
+  protocol  = "lambda"
+  endpoint  = aws_lambda_function.email_verification_lambda.arn
+}
+
+# Allow SNS to Trigger Lambda
+resource "aws_lambda_permission" "allow_sns" {
+  statement_id  = "AllowSNSInvokeLambda"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.email_verification_lambda.function_name
+  principal     = "sns.amazonaws.com"
+  source_arn    = aws_sns_topic.email_verification_topic.arn
+}
+
+
+# Output for SNS Topic
+output "sns_topic_arn" {
+  description = "ARN of the SNS topic for email verification"
+  value       = aws_sns_topic.email_verification_topic.arn
+}
+
+# Output for Lambda Function
+output "lambda_function_name" {
+  description = "Name of the Lambda function for email verification"
+  value       = aws_lambda_function.email_verification_lambda.function_name
+}
+
+output "lambda_execution_role" {
+  description = "IAM Role ARN for the Lambda function"
+  value       = aws_iam_role.lambda_execution_role.arn
 }
