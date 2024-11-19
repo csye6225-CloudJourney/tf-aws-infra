@@ -57,7 +57,7 @@ variable "key_name" {
 variable "asg_min_size" {
   description = "Minimum number of instances in the Auto Scaling Group"
   type        = number
-  default     = 3
+  default     = 1
 }
 
 variable "asg_max_size" {
@@ -69,7 +69,7 @@ variable "asg_max_size" {
 variable "asg_desired_capacity" {
   description = "Desired number of instances in the Auto Scaling Group"
   type        = number
-  default     = 1
+  default     = 2
 }
 
 variable "asg_cooldown" {
@@ -84,7 +84,18 @@ variable "app_port" {
   default     = 8080
 }
 
-variable "hosted_zone_id" {
-  description = "The hosted zone ID for Route 53."
+#variable "hosted_zone_id" {
+# description = "The hosted zone ID for Route 53."
+#type        = string
+#}
+
+variable "sendgrid_api_key" {
+  description = "SendGrid API key for sending emails"
+  type        = string
+  sensitive   = true
+}
+
+variable "lambda_zip_file" {
+  description = "Path to the Lambda zip file"
   type        = string
 }
