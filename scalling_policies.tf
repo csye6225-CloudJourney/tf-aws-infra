@@ -7,7 +7,7 @@ resource "aws_cloudwatch_metric_alarm" "scale_up_alarm" {
   namespace           = "AWS/EC2"
   period              = 60
   statistic           = "Average"
-  threshold           = 5
+  threshold           = 30
   alarm_actions       = [aws_autoscaling_policy.scale_up_policy.arn]
   dimensions = {
     AutoScalingGroupName = aws_autoscaling_group.csye6225_asg.name
@@ -22,7 +22,7 @@ resource "aws_cloudwatch_metric_alarm" "scale_down_alarm" {
   namespace           = "AWS/EC2"
   period              = 60
   statistic           = "Average"
-  threshold           = 3
+  threshold           = 15
   alarm_actions       = [aws_autoscaling_policy.scale_down_policy.arn]
   dimensions = {
     AutoScalingGroupName = aws_autoscaling_group.csye6225_asg.name
