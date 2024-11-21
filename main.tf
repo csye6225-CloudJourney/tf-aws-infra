@@ -123,6 +123,27 @@ resource "aws_iam_policy" "s3_access_policy" {
   })
 }
 
+#Allow cloud watch agent to invoke lambda
+resource "aws_iam_policy" "invoke_lambda_policy" {
+  name        = "InvokeLambdaPolicy-${local.environment}"
+  description = "Policy to allow invoking the email-verification-handler Lambda function"
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect   = "Allow",
+        Action   = ["lambda:InvokeFunction"],
+        Resource = aws_lambda_function.email_verification_lambda.arn
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "attach_invoke_lambda_policy" {
+  role       = aws_iam_role.cloudwatch_agent_role.name
+  policy_arn = aws_iam_policy.invoke_lambda_policy.arn
+}
+
 # Attach S3 Access Policy to the CloudWatchAgentRole
 resource "aws_iam_role_policy_attachment" "attach_s3_access_policy" {
   role       = aws_iam_role.cloudwatch_agent_role.name
@@ -256,6 +277,7 @@ resource "aws_lambda_function" "email_verification_lambda" {
       DB_PASSWORD      = var.db_password
       DB_NAME          = aws_db_instance.mydb.db_name
       SENDGRID_API_KEY = var.sendgrid_api_key
+      ENV_PREFIX       = var.aws_profile
     }
   }
 
