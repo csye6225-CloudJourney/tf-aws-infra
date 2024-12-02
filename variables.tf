@@ -43,12 +43,6 @@ variable "instance_type" {
   type        = string
 }
 
-variable "db_password" {
-  description = "The master password for the RDS instance"
-  type        = string
-  sensitive   = true
-}
-
 variable "key_name" {
   description = "AWS Key Pair for SSH access"
   type        = string
@@ -99,3 +93,4 @@ variable "lambda_zip_file" {
   description = "Path to the Lambda zip file"
   type        = string
 }
+
