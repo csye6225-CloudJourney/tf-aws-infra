@@ -93,6 +93,7 @@ resource "aws_lb_listener" "app_lb_listener" {
 
 # Auto Scaling Group 
 resource "aws_autoscaling_group" "csye6225_asg" {
+  name = "${var.vpc_name_prefix}-WebApp-ASG-${local.environment}"
   desired_capacity    = var.asg_desired_capacity
   max_size            = var.asg_max_size
   min_size            = var.asg_min_size
